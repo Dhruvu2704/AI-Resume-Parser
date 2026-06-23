@@ -5,6 +5,7 @@ from utils.parser import (
     extract_pdf_text,
     extract_docx_text
 )
+from utils.skill_matcher import compare_skills
 from utils.matcher import calculate_match_score
 
 
@@ -106,4 +107,58 @@ async def analyze_resume(
     return {
         "filename": file.filename,
         "match_score": score
+    }
+
+@app.post("/skill-analysis")
+async def skill_analysis(
+    resume_text: str = Form(...),
+    jd_text: str = Form(...)
+):
+
+    result = compare_skills(
+        resume_text,
+        jd_text
+    )
+
+    return result
+
+@app.post("/recruiter-analysis")
+async def recruiter_analysis(
+    resume_text: str = Form(...),
+    jd_text: str = Form(...)
+):
+
+    score = calculate_match_score(
+        resume_text,
+        jd_text
+    )
+
+    skills = compare_skills(
+        resume_text,
+        jd_text
+    )
+
+    if score >= 80:
+        summary = (
+            "Strong candidate match. Most required "
+            "skills are present."
+        )
+
+    elif score >= 60:
+        summary = (
+            "Moderate candidate match. Some skills "
+            "are missing."
+        )
+
+    else:
+        summary = (
+            "Low candidate match. Significant skill "
+            "gaps detected."
+        )
+
+    return {
+        "match_score": score,
+        "matched_skills": skills["matched_skills"],
+        "missing_skills": skills["missing_skills"],
+        "recruiter_summary": summary
     }
