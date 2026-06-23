@@ -7,7 +7,7 @@ from utils.parser import (
 )
 from utils.skill_matcher import compare_skills
 from utils.matcher import calculate_match_score
-
+from utils.ranker import rank_resumes
 
 app = FastAPI()
 
@@ -162,3 +162,47 @@ async def recruiter_analysis(
         "missing_skills": skills["missing_skills"],
         "recruiter_summary": summary
     }
+
+@app.post("/rank-resumes")
+async def rank_multiple_resumes(
+    jd_text: str = Form(...)
+):
+
+    resumes = [
+
+        {
+            "name": "Candidate_A",
+            "text": """
+            Python FastAPI SQL
+            Machine Learning
+            Docker
+            AWS
+            """
+        },
+
+        {
+            "name": "Candidate_B",
+            "text": """
+            Python SQL
+            Pandas
+            NumPy
+            """
+        },
+
+        {
+            "name": "Candidate_C",
+            "text": """
+            Python FastAPI
+            SQL Docker
+            Machine Learning
+            Git
+            """
+        }
+    ]
+
+    ranking = rank_resumes(
+        resumes,
+        jd_text
+    )
+
+    return ranking
