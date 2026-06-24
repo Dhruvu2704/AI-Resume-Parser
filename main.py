@@ -1,15 +1,39 @@
+from typing import List
 from fastapi import FastAPI, UploadFile, File, Form
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 from utils.parser import (
     extract_pdf_text,
     extract_docx_text
 )
+
 from utils.skill_matcher import compare_skills
 from utils.matcher import calculate_match_score
 from utils.ranker import rank_resumes
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@app.get("/")
+def home():
+    return {
+        "message": "Resume Parser API Running"
+    }
+
 
 @app.post("/job-description")
 async def job_description(
@@ -19,16 +43,6 @@ async def job_description(
         "job_description": jd
     }
 
-UPLOAD_DIR = "uploads"
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-@app.get("/")
-def home():
-    return {
-        "message": "Resume Parser API Running"
-    }
 
 @app.post("/upload-resume")
 async def upload_resume(
@@ -59,6 +73,7 @@ async def upload_resume(
         "extracted_text": text[:3000]
     }
 
+
 @app.post("/match-score")
 async def match_score(
     resume_text: str = Form(...),
@@ -73,6 +88,7 @@ async def match_score(
     return {
         "match_score": score
     }
+
 
 @app.post("/analyze-resume")
 async def analyze_resume(
@@ -104,10 +120,28 @@ async def analyze_resume(
         jd_text
     )
 
+    skills = compare_skills(
+        resume_text,
+        jd_text
+    )
+
+    if score >= 80:
+        summary = "Strong candidate match. Most required skills are present."
+
+    elif score >= 60:
+        summary = "Moderate candidate match. Some skills are missing."
+
+    else:
+        summary = "Low candidate match. Significant skill gaps detected."
+
     return {
         "filename": file.filename,
-        "match_score": score
+        "match_score": score,
+        "matched_skills": skills["matched_skills"],
+        "missing_skills": skills["missing_skills"],
+        "recruiter_summary": summary
     }
+
 
 @app.post("/skill-analysis")
 async def skill_analysis(
@@ -121,6 +155,7 @@ async def skill_analysis(
     )
 
     return result
+
 
 @app.post("/recruiter-analysis")
 async def recruiter_analysis(
@@ -140,20 +175,17 @@ async def recruiter_analysis(
 
     if score >= 80:
         summary = (
-            "Strong candidate match. Most required "
-            "skills are present."
+            "Strong candidate match. Most required skills are present."
         )
 
     elif score >= 60:
         summary = (
-            "Moderate candidate match. Some skills "
-            "are missing."
+            "Moderate candidate match. Some skills are missing."
         )
 
     else:
         summary = (
-            "Low candidate match. Significant skill "
-            "gaps detected."
+            "Low candidate match. Significant skill gaps detected."
         )
 
     return {
@@ -162,6 +194,7 @@ async def recruiter_analysis(
         "missing_skills": skills["missing_skills"],
         "recruiter_summary": summary
     }
+
 
 @app.post("/rank-resumes")
 async def rank_multiple_resumes(
@@ -199,6 +232,50 @@ async def rank_multiple_resumes(
             """
         }
     ]
+
+    ranking = rank_resumes(
+        resumes,
+        jd_text
+    )
+
+    return ranking
+
+
+@app.post("/rank-uploaded-resumes")
+async def rank_uploaded_resumes(
+    files: List[UploadFile] = File(...),
+    jd_text: str = Form(...)
+):
+
+    resumes = []
+
+    for file in files:
+
+        file_path = os.path.join(
+            UPLOAD_DIR,
+            file.filename
+        )
+
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+
+        if file.filename.endswith(".pdf"):
+            resume_text = extract_pdf_text(
+                file_path
+            )
+
+        elif file.filename.endswith(".docx"):
+            resume_text = extract_docx_text(
+                file_path
+            )
+
+        else:
+            continue
+
+        resumes.append({
+            "name": file.filename,
+            "text": resume_text
+        })
 
     ranking = rank_resumes(
         resumes,
