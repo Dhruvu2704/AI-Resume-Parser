@@ -8,7 +8,19 @@ from utils.parser import (
     extract_docx_text
 )
 
-from utils.skill_matcher import compare_skills
+from utils.skill_matcher import (
+    compare_skills,
+    extract_skills
+)
+
+from utils.career_personality import (
+    get_career_personality
+)
+
+from utils.recommended_roles import (
+    get_recommended_roles
+)
+
 from utils.matcher import calculate_match_score
 from utils.ranker import rank_resumes
 
@@ -125,6 +137,22 @@ async def analyze_resume(
         jd_text
     )
 
+    resume_skills = extract_skills(
+        resume_text
+    )
+
+    career_personality = (
+        get_career_personality(
+            resume_skills
+        )
+    )
+
+    recommended_roles = (
+        get_recommended_roles(
+            resume_skills
+        )
+    )
+
     if score >= 80:
         summary = "Strong candidate match. Most required skills are present."
 
@@ -136,10 +164,23 @@ async def analyze_resume(
 
     return {
         "filename": file.filename,
+
         "match_score": score,
-        "matched_skills": skills["matched_skills"],
-        "missing_skills": skills["missing_skills"],
-        "recruiter_summary": summary
+
+        "matched_skills":
+            skills["matched_skills"],
+
+        "missing_skills":
+            skills["missing_skills"],
+
+        "career_personality":
+            career_personality,
+
+        "recommended_roles":
+            recommended_roles,
+
+        "recruiter_summary":
+            summary
     }
 
 
