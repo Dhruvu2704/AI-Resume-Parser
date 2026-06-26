@@ -2,6 +2,7 @@ from typing import List
 from fastapi import FastAPI, UploadFile, File, Form
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from utils.career_gps import get_career_gps
 
 from utils.parser import (
     extract_pdf_text,
@@ -21,6 +22,10 @@ from utils.recommended_roles import (
     get_recommended_roles
 )
 
+from utils.recruiter_ai import (
+    generate_recruiter_report
+)
+
 from utils.matcher import calculate_match_score
 from utils.ranker import rank_resumes
 
@@ -29,7 +34,9 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "https://YOUR-VERCEL-DOMAIN.vercel.app"
+
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -153,16 +160,23 @@ async def analyze_resume(
         )
     )
 
-    if score >= 80:
-        summary = "Strong candidate match. Most required skills are present."
+    career_gps = get_career_gps(
+        resume_skills,
+        recommended_roles[0]["role"]
+    )
 
-    elif score >= 60:
-        summary = "Moderate candidate match. Some skills are missing."
-
-    else:
-        summary = "Low candidate match. Significant skill gaps detected."
+    recruiter_report = generate_recruiter_report(
+        resume_text=resume_text,
+        ats_score=score,
+        matched_skills=skills["matched_skills"],
+        missing_skills=skills["missing_skills"],
+        career_personality=career_personality,
+        recommended_roles=recommended_roles,
+        career_gps=career_gps
+    )
 
     return {
+
         "filename": file.filename,
 
         "match_score": score,
@@ -179,10 +193,12 @@ async def analyze_resume(
         "recommended_roles":
             recommended_roles,
 
-        "recruiter_summary":
-            summary
-    }
+        "career_gps":
+            career_gps,
 
+        "recruiter_report":
+            recruiter_report
+    }
 
 @app.post("/skill-analysis")
 async def skill_analysis(

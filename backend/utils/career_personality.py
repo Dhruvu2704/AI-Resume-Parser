@@ -3,7 +3,6 @@
 PERSONALITIES = {
 
     "The Builder": {
-        "emoji": "🛠️",
         "skills": [
             "fastapi",
             "flask",
@@ -20,7 +19,6 @@ PERSONALITIES = {
     },
 
     "The Innovator": {
-        "emoji": "🚀",
         "skills": [
             "machine learning",
             "deep learning",
@@ -36,7 +34,6 @@ PERSONALITIES = {
     },
 
     "The Analyst": {
-        "emoji": "📊",
         "skills": [
             "sql",
             "pandas",
@@ -49,7 +46,6 @@ PERSONALITIES = {
     },
 
     "The Cloud Architect": {
-        "emoji": "☁️",
         "skills": [
             "aws",
             "azure",
@@ -61,7 +57,6 @@ PERSONALITIES = {
     },
 
     "The Explorer": {
-        "emoji": "🧭",
         "skills": [],
         "description":
         "You have a diverse skill set and are still discovering your strongest specialization. Your versatility is your strength."
@@ -126,8 +121,6 @@ def get_career_personality(skills):
 
     return {
         "title": best_personality,
-        "emoji":
-            PERSONALITIES[best_personality]["emoji"],
         "description":
             PERSONALITIES[best_personality]["description"],
         "confidence": confidence
