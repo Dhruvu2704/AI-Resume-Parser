@@ -26,7 +26,7 @@ It was built to give job seekers actionable, data-backed feedback on how well th
 | Service | URL |
 |---|---|
 | Frontend | `https://careerwrapped-ai.vercel.app` |
-| Backend API | `<placeholder>` |
+| Backend API | `https://ai-resume-parser-b0md.onrender.com` |
 
 ---
 
