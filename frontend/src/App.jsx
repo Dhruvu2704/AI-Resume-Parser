@@ -10,6 +10,7 @@ import CareerScreen   from "./screens/CareerScreen";
 import GPSScreen      from "./screens/GPSScreen";
 import ActionPlanScreen from "./screens/ActionPlanScreen";
 import ScreenNav      from "./components/ScreenNav";
+const API = import.meta.env.VITE_API_URL;
 
 // ── Screen index constants ────────────────────────────────────────────────────
 const SCREEN_LANDING = 0;
@@ -53,7 +54,10 @@ export default function App() {
       setResult(null);
 
       const [response] = await Promise.all([
-        axios.post("http://127.0.0.1:8000/analyze-resume", formData),
+        axios.post(
+            `${API}/analyze-resume`,
+            formData
+        ),
         (async () => {
           await advanceStep(600, 1);
           await advanceStep(600, 2);
